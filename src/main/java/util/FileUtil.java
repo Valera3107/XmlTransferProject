@@ -1,7 +1,8 @@
 package util;
 
 import config.AdvancedXMLHandler;
-import model.Num;
+import lombok.extern.java.Log;
+import model.Entry;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -23,60 +24,84 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
+@Log
 public class FileUtil {
   private static String fileToWriteFromDB = "src/main/resources/1.xml";
   private static String fileToWriteNewFormatXml = "src/main/resources/2.xml";
   private static String templateForNewXmlFormat = "src/main/resources/transform.xsl";
 
-  public static void writeToFileDataFromDB(List<Num> entities) throws Exception {
-    DocumentBuilderFactory icFactory = DocumentBuilderFactory.newInstance();
-    DocumentBuilder icBuilder;
-    icBuilder = icFactory.newDocumentBuilder();
-    Document doc = icBuilder.newDocument();
-    Element mainRootElement = doc.createElementNS(null, "entries");
-    doc.appendChild(mainRootElement);
+  private FileUtil() {
+  }
 
-    for (Num val : entities) {
-      mainRootElement.appendChild(getEntity(doc, val.getNum()));
+  public static void writeToFileDataFromDB(List<Entry> entities) {
+    try {
+      DocumentBuilderFactory icFactory = DocumentBuilderFactory.newInstance();
+      DocumentBuilder icBuilder;
+      icBuilder = icFactory.newDocumentBuilder();
+      Document doc = icBuilder.newDocument();
+      Element mainRootElement = doc.createElementNS(null, "entries");
+      doc.appendChild(mainRootElement);
+
+      for (Entry val : entities) {
+        mainRootElement.appendChild(getEntity(doc, val.getField()));
+      }
+
+      cleanResourcesFiles();
+
+      Transformer transformer = TransformerFactory.newInstance().newTransformer();
+      transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+      DOMSource source = new DOMSource(doc);
+      StreamResult file = new StreamResult(new File(fileToWriteFromDB));
+      transformer.transform(source, file);
+      log.info("Wrote data from database to xml file;");
+    } catch (Exception ex) {
+      log.log(Level.WARNING, "Failed to write into the file;");
+    }
+  }
+
+  public static void cleanResourcesFiles() {
+    try (FileWriter fstream1 = new FileWriter(fileToWriteFromDB);
+         BufferedWriter out1 = new BufferedWriter(fstream1);
+         FileWriter fstream2 = new FileWriter(fileToWriteNewFormatXml);
+         BufferedWriter out2 = new BufferedWriter(fstream2)) {
+      out1.write("");
+      out1.close();
+      out2.write("");
+      out2.close();
+      log.info("Cleaned xml files with data;");
+    } catch (IOException ex) {
+      log.log(Level.WARNING, "Failed of file cleaning;");
     }
 
-    cleanResourcesFiles();
-
-    Transformer transformer = TransformerFactory.newInstance().newTransformer();
-    transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-    DOMSource source = new DOMSource(doc);
-    StreamResult file = new StreamResult(new File(fileToWriteFromDB));
-    transformer.transform(source, file);
   }
 
-  public static void cleanResourcesFiles() throws IOException {
-    FileWriter fstream1 = new FileWriter(fileToWriteFromDB);
-    BufferedWriter out1 = new BufferedWriter(fstream1);
-    out1.write("");
-    out1.close();
-    FileWriter fstream2 = new FileWriter(fileToWriteNewFormatXml);
-    BufferedWriter out2 = new BufferedWriter(fstream2);
-    out2.write("");
-    out2.close();
+  public static void writeToFileNewXMLFormat() {
+    try {
+      TransformerFactory factoryTransform = TransformerFactory.newInstance();
+      Source xslt = new StreamSource(new File(templateForNewXmlFormat));
+      Transformer transformer = factoryTransform.newTransformer(xslt);
+      Source xml = new StreamSource(new File(fileToWriteFromDB));
+      transformer.transform(xml, new StreamResult(new File(fileToWriteNewFormatXml)));
+      log.info("Wrote data to the new xml file;");
+    } catch (Exception ex) {
+      log.log(Level.WARNING, "Failed to write to the new xml file;");
+    }
   }
 
-  public static void writeToFileNewXMLFormat(List<Long> list) throws Exception {
-    TransformerFactory factoryTransform = TransformerFactory.newInstance();
-    Source xslt = new StreamSource(new File(templateForNewXmlFormat));
-    Transformer transformer = factoryTransform.newTransformer(xslt);
-    Source xml = new StreamSource(new File(fileToWriteFromDB));
-    transformer.transform(xml, new StreamResult(new File(fileToWriteNewFormatXml)));
-  }
-
-  public static List<Long> getDataFromNewXmlFile() throws Exception {
+  public static List<Long> getDataFromNewXmlFile() {
     List<Long> list = new ArrayList<>();
 
-    SAXParserFactory factory = SAXParserFactory.newInstance();
-    SAXParser parser = factory.newSAXParser();
-
-    AdvancedXMLHandler handler = new AdvancedXMLHandler(list);
-    parser.parse(new File(fileToWriteNewFormatXml), handler);
+    try {
+      SAXParserFactory factory = SAXParserFactory.newInstance();
+      SAXParser parser = factory.newSAXParser();
+      AdvancedXMLHandler handler = new AdvancedXMLHandler(list);
+      parser.parse(new File(fileToWriteNewFormatXml), handler);
+      log.info("Got data from the new xml file;");
+    } catch (Exception ex) {
+      log.log(Level.WARNING, "Failed to read from the new XML file;");
+    }
     return list;
   }
 

@@ -13,7 +13,7 @@
     <property name="hibernate.show_sql">false</property>
     <property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
 
-    <mapping class="model.Num"/>
+    <mapping class="model.Entry"/>
 
   </session-factory>
 </hibernate-configuration>
