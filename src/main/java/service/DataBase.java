@@ -14,15 +14,13 @@ public class DataBase {
   private DataBase() {
   }
 
-  public static List<Num> getDataFromDB() {
+  public static List<Num> getDataFromDB(Long num) {
     Session session = HibernateUtil.getSessionFactory().openSession();
     Transaction transaction = session.beginTransaction();
 
     deleteAll("model.Num", session);
 
-    int size = 10 + (int) (Math.random() * 99);
-
-    for (long i = 1; i <= size; i++) {
+    for (long i = 1; i <= num; i++) {
       session.save(new Num(i));
     }
 
