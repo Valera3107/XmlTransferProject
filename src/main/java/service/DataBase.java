@@ -1,19 +1,24 @@
+package service;
+
+import model.Num;
 import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import util.HibernateUtil;
 
 import java.util.List;
 
 public class DataBase {
 
-  private DataBase(){}
+  private DataBase() {
+  }
 
-  public static List<Num> getDataFromDB(){
+  public static List<Num> getDataFromDB() {
     Session session = HibernateUtil.getSessionFactory().openSession();
     Transaction transaction = session.beginTransaction();
 
-    deleteAll("Num", session);
+    deleteAll("model.Num", session);
 
     int size = 10 + (int) (Math.random() * 99);
 
